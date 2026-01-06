@@ -1,5 +1,6 @@
 import { applyTransform } from '../../ast-utils';
 import {
+  deadCodeRemoval,
   memberExpressionSimplifier,
   moduleResolver,
   proxyInliner,
@@ -68,8 +69,12 @@ const abbaTarget: DeobfuscatorTarget = {
       state.changes += resolverResult.changes;
       log(`Module Resolver: ${resolverResult.changes} modules resolved`);
 
-      // Future steps will be added here:
       // Step 6: Dead Code Removal
+      const deadCodeResult = applyTransform(ast, deadCodeRemoval, {
+        debug,
+      });
+      state.changes += deadCodeResult.changes;
+      log(`Dead Code Removal: ${deadCodeResult.changes} bindings removed`);
     },
   },
 };

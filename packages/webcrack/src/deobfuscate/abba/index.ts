@@ -4,3 +4,4 @@ export { default as proxyInliner } from './proxy-inliner';
 export { default as stringNormalizer } from './string-normalizer';
 export { default as memberExpressionSimplifier } from './member-expression-simplifier';
 export { default as moduleResolver } from './module-resolver';
+export { default as deadCodeRemoval } from './dead-code-removal';
