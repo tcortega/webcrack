@@ -1,5 +1,10 @@
 import { applyTransform } from '../../ast-utils';
-import { proxyInliner, stringArrayExtractor, stringArrayRotator } from '../abba';
+import {
+  memberExpressionSimplifier,
+  proxyInliner,
+  stringArrayExtractor,
+  stringArrayRotator,
+} from '../abba';
 import type { DeobfuscatorTarget } from '../target';
 
 const abbaTarget: DeobfuscatorTarget = {
@@ -40,8 +45,14 @@ const abbaTarget: DeobfuscatorTarget = {
       state.changes += inlinerResult.changes;
       log(`Proxy Inliner: ${inlinerResult.changes} calls inlined`);
 
-      // Future steps will be added here:
       // Step 4: Member Expression Simplifier
+      const simplifierResult = applyTransform(ast, memberExpressionSimplifier, {
+        debug,
+      });
+      state.changes += simplifierResult.changes;
+      log(`Member Expression Simplifier: ${simplifierResult.changes} expressions simplified`);
+
+      // Future steps will be added here:
       // Step 5: Module Loader Resolver
       // Step 6: Dead Code Removal
     },
