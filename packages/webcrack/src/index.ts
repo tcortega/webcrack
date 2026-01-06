@@ -7,14 +7,14 @@ import debug from 'debug';
 import { join, normalize } from 'node:path';
 import {
   applyTransform,
-  applyTransformAsync,
   applyTransforms,
   generate,
 } from './ast-utils';
 import type { Sandbox } from './deobfuscate';
-import deobfuscate, {
+import {
   createBrowserSandbox,
   createNodeSandbox,
+  runDeobfuscation,
 } from './deobfuscate';
 import debugProtection from './deobfuscate/debug-protection';
 import evaluateGlobals from './deobfuscate/evaluate-globals';
@@ -69,9 +69,13 @@ export interface Options {
   unpack?: boolean;
   /**
    * Deobfuscate the code.
+   * - `true`: Auto-detect the obfuscator or use default target
+   * - `false`: Skip deobfuscation
+   * - `string`: Use specific target by ID (e.g., 'obfuscator.io')
+   * - `'auto'`: Auto-detect the obfuscator (same as `true`)
    * @default true
    */
-  deobfuscate?: boolean;
+  deobfuscate?: boolean | string;
   /**
    * Unminify the code. Required for some of the deobfuscate/unpack/jsx transforms.
    * @default true
@@ -124,6 +128,13 @@ function mergeOptions(options: Options): asserts options is Required<Options> {
   Object.assign(options, mergedOptions);
 }
 
+/**
+ * Check if deobfuscation is enabled (handles both boolean and string values)
+ */
+function isDeobfuscateEnabled(deobfuscate: boolean | string): boolean {
+  return deobfuscate !== false;
+}
+
 export async function webcrack(
   code: string,
   options: Options = {},
@@ -150,6 +161,7 @@ export async function webcrack(
 
   const { plugins } = options;
   const state: PluginState = { opts: {} };
+  const shouldDeobfuscate = isDeobfuscateEnabled(options.deobfuscate);
 
   const stages = [
     () => {
@@ -175,8 +187,12 @@ export async function webcrack(
     plugins.afterPrepare &&
       (() => runPlugins(ast, plugins.afterPrepare!, state)),
 
-    options.deobfuscate &&
-      (() => applyTransformAsync(ast, deobfuscate, options.sandbox)),
+    shouldDeobfuscate &&
+      (() =>
+        runDeobfuscation(ast, {
+          target: options.deobfuscate,
+          sandbox: options.sandbox,
+        })),
     plugins.afterDeobfuscate &&
       (() => runPlugins(ast, plugins.afterDeobfuscate!, state)),
 
@@ -195,18 +211,18 @@ export async function webcrack(
           typeof options.mangle === 'boolean' ? () => true : options.mangle,
         )),
     // TODO: Also merge unminify visitor (breaks selfDefending/debugProtection atm)
-    (options.deobfuscate || options.jsx) &&
+    (shouldDeobfuscate || options.jsx) &&
       (() => {
         applyTransforms(
           ast,
           [
             // Have to run this after unminify to properly detect it
-            options.deobfuscate ? [selfDefending, debugProtection] : [],
+            shouldDeobfuscate ? [selfDefending, debugProtection] : [],
             options.jsx ? [jsx, jsxNew] : [],
           ].flat(),
         );
       }),
-    options.deobfuscate &&
+    shouldDeobfuscate &&
       (() => applyTransforms(ast, [mergeObjectAssignments, evaluateGlobals])),
     () => (outputCode = generate(ast)),
     // Unpacking modifies the same AST and may result in imports not at top level

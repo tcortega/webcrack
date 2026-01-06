@@ -5,7 +5,7 @@ export type WorkerRequest =
   | {
       type: 'deobfuscate';
       code: string;
-      options: Options & { mangleRegex: RegExp | null };
+      options: Options & { mangleRegex: RegExp | null; deobfuscator?: string };
     }
   | { type: 'sandbox'; result: unknown };
 
@@ -45,12 +45,17 @@ self.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
   }
 
   try {
-    const { mangleRegex } = data.options;
+    const { mangleRegex, deobfuscate, deobfuscator, ...restOptions } =
+      data.options;
+
+    // Convert deobfuscate (boolean) + deobfuscator (string) to the API format
+    const deobfuscateOption = deobfuscate ? deobfuscator || 'auto' : false;
 
     const result = await webcrack(data.code, {
       sandbox,
       onProgress,
-      ...data.options,
+      ...restOptions,
+      deobfuscate: deobfuscateOption,
       mangle: mangleRegex ? (id) => mangleRegex.test(id) : undefined,
     });
     const files = Array.from(result.bundle?.modules ?? [], ([, module]) => ({

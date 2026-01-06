@@ -6,6 +6,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import * as url from 'node:url';
+import { deobfuscatorRegistry } from './deobfuscate/registry.js';
+// Import targets to ensure they're registered
+import './deobfuscate/targets/index.js';
 import { webcrack } from './index.js';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -22,6 +25,8 @@ interface Options {
   jsx: boolean;
   unpack: boolean;
   deobfuscate: boolean;
+  deobfuscator?: string;
+  listDeobfuscators?: boolean;
   unminify: boolean;
 }
 
@@ -41,10 +46,31 @@ program
   .option('--no-jsx', 'do not decompile JSX')
   .option('--no-unpack', 'do not extract modules from the bundle')
   .option('--no-deobfuscate', 'do not deobfuscate the code')
+  .option(
+    '-d, --deobfuscator <target>',
+    'deobfuscator target to use (e.g., obfuscator.io, auto)',
+  )
+  .option('--list-deobfuscators', 'list available deobfuscator targets')
   .option('--no-unminify', 'do not unminify the code')
   .argument('[file]', 'input file, defaults to stdin')
   .action(async (input: string | undefined) => {
-    const { output, force, ...options } = program.opts<Options>();
+    const opts = program.opts<Options>();
+
+    // Handle --list-deobfuscators
+    if (opts.listDeobfuscators) {
+      console.log('Available deobfuscator targets:\n');
+      for (const target of deobfuscatorRegistry.getAll()) {
+        console.log(`  ${target.meta.id}`);
+        console.log(`    Name: ${target.meta.name}`);
+        if (target.meta.description) {
+          console.log(`    Description: ${target.meta.description}`);
+        }
+        console.log();
+      }
+      return;
+    }
+
+    const { output, force, deobfuscator, listDeobfuscators, ...options } = opts;
     const code = await (input ? readFile(input, 'utf8') : readStdin());
 
     if (output) {
@@ -55,7 +81,13 @@ program
       }
     }
 
-    const result = await webcrack(code, options);
+    // Convert deobfuscator option to deobfuscate format
+    const deobfuscateOption = deobfuscator ? deobfuscator : options.deobfuscate;
+
+    const result = await webcrack(code, {
+      ...options,
+      deobfuscate: deobfuscateOption,
+    });
 
     if (output) {
       await result.save(output);

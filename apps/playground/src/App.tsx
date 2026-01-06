@@ -26,6 +26,7 @@ import type { DeobfuscateResult } from './webcrack.worker';
 
 export const [config, setConfig] = createStore({
   deobfuscate: true,
+  deobfuscator: 'auto' as string,
   unminify: true,
   unpack: true,
   jsx: true,

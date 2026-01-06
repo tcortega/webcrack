@@ -104,6 +104,22 @@ export default function Sidebar(props: Props) {
           onClick={(e) => setConfig('deobfuscate', e.currentTarget.checked)}
         />
       </label>
+      <Show when={config.deobfuscate}>
+        <label class="label cursor-pointer px-4 py-2 hover:bg-base-100 text-base-content">
+          <span class="label-text ml-8 mr-auto hidden sm:inline text-sm opacity-70">
+            Target
+          </span>
+          <select
+            class="select select-sm ml-4 flex-1 w-full"
+            value={config.deobfuscator}
+            onChange={(e) => setConfig('deobfuscator', e.currentTarget.value)}
+          >
+            <option value="auto">Auto-detect</option>
+            <option value="obfuscator.io">Obfuscator.io</option>
+            <option value="abba">Abba</option>
+          </select>
+        </label>
+      </Show>
       <label class="label cursor-pointer px-4 py-2 hover:bg-base-100 group text-base-content">
         <svg
           width="28"
