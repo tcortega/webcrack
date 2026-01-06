@@ -17,10 +17,12 @@ const abbaTarget: DeobfuscatorTarget = {
 
   deobfuscate: {
     async run(context) {
-      const { ast, state, log } = context;
+      const { ast, state, log, debug } = context;
 
       // Step 1: String Array Extractor
-      const extractorResult = applyTransform(ast, stringArrayExtractor);
+      const extractorResult = applyTransform(ast, stringArrayExtractor, {
+        debug,
+      });
       state.changes += extractorResult.changes;
       log(`String Array Extractor: ${extractorResult.changes} arrays extracted`);
 

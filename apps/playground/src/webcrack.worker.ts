@@ -5,7 +5,11 @@ export type WorkerRequest =
   | {
       type: 'deobfuscate';
       code: string;
-      options: Options & { mangleRegex: RegExp | null; deobfuscator?: string };
+      options: Options & {
+        mangleRegex: RegExp | null;
+        deobfuscator?: string;
+        debugLogging?: boolean;
+      };
     }
   | { type: 'sandbox'; result: unknown };
 

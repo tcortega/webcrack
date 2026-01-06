@@ -16,6 +16,8 @@ export interface DeobfuscateRunnerOptions {
   sandbox?: Sandbox;
   /** Callback for log messages */
   onLog?: (level: 'info' | 'debug' | 'warn' | 'error', message: string) => void;
+  /** Enable verbose debug logging */
+  debugLogging?: boolean;
 }
 
 /**
@@ -75,12 +77,14 @@ async function runTarget(
   target: DeobfuscatorTarget,
   ast: t.File,
   state: TransformState,
-  sandbox?: Sandbox,
-  onLog?: (level: 'info' | 'debug' | 'warn' | 'error', message: string) => void,
+  options: DeobfuscateRunnerOptions,
 ): Promise<void> {
+  const { sandbox, onLog, debugLogging = false } = options;
   const targetLogger = debug(`webcrack:deobfuscate:${target.meta.id}`);
   targetLogger(`Starting deobfuscation`);
   onLog?.('info', `[${target.meta.id}] Starting deobfuscation`);
+
+  const debugTargetLogger = debug(`webcrack:deobfuscate:${target.meta.id}:debug`);
 
   const context: DeobfuscatorContext = {
     ast,
@@ -94,6 +98,16 @@ async function runTarget(
           ? message.replace(/%[sdifjoO%]/g, () => String(args.shift()))
           : message;
       onLog?.('info', `[${target.meta.id}] ${formattedMessage}`);
+    },
+    debug: (message, ...args) => {
+      if (!debugLogging) return;
+      debugTargetLogger(message, ...args);
+      // Format the message with args for onLog callback
+      const formattedMessage =
+        args.length > 0
+          ? message.replace(/%[sdifjoO%]/g, () => String(args.shift()))
+          : message;
+      onLog?.('debug', `[${target.meta.id}] ${formattedMessage}`);
     },
   };
 
@@ -125,7 +139,7 @@ export async function runDeobfuscation(
     return state;
   }
 
-  await runTarget(target, ast, state, options.sandbox, options.onLog);
+  await runTarget(target, ast, state, options);
 
   return state;
 }

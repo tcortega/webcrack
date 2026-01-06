@@ -31,7 +31,14 @@ import type { DeobfuscateResult } from './webcrack.worker';
 
 function LogsPanelWithContext() {
   const { logs, clearLogs } = useDeobfuscateContext();
-  return <LogsPanel logs={logs} onClear={clearLogs} />;
+  return (
+    <LogsPanel
+      logs={logs}
+      onClear={clearLogs}
+      debugEnabled={() => config.debugLogging}
+      onDebugToggle={(enabled) => setConfig('debugLogging', enabled)}
+    />
+  );
 }
 
 type SerializedConfig = {
@@ -41,6 +48,7 @@ type SerializedConfig = {
   unpack: boolean;
   jsx: boolean;
   mangleRegex: { pattern: string; flags: string } | null;
+  debugLogging: boolean;
 };
 
 const defaultConfig = {
@@ -50,6 +58,7 @@ const defaultConfig = {
   unpack: true,
   jsx: true,
   mangleRegex: null as RegExp | null,
+  debugLogging: false,
 };
 
 function loadConfig(): typeof defaultConfig {

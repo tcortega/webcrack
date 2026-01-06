@@ -33,8 +33,10 @@ export interface DeobfuscatorContext {
   ast: t.File;
   state: TransformState;
   sandbox?: Sandbox;
-  /** Logger function scoped to this target */
+  /** Logger function scoped to this target (info level) */
   log: (message: string, ...args: unknown[]) => void;
+  /** Debug logger for verbose per-node logging (only active when debugLogging is enabled) */
+  debug: (message: string, ...args: unknown[]) => void;
 }
 
 /**

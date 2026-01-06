@@ -116,6 +116,12 @@ export interface Options {
    * @param message Log message
    */
   onLog?: (level: 'info' | 'debug' | 'warn' | 'error', message: string) => void;
+  /**
+   * Enable verbose debug logging for transforms.
+   * When enabled, transforms will emit detailed per-node logging.
+   * @default false
+   */
+  debugLogging?: boolean;
 }
 
 function mergeOptions(options: Options): asserts options is Required<Options> {
@@ -125,6 +131,7 @@ function mergeOptions(options: Options): asserts options is Required<Options> {
     unpack: true,
     deobfuscate: true,
     mangle: false,
+    debugLogging: false,
     plugins: options.plugins ?? {},
     mappings: () => ({}),
     onProgress: () => {},
@@ -200,6 +207,7 @@ export async function webcrack(
           target: options.deobfuscate,
           sandbox: options.sandbox,
           onLog: options.onLog,
+          debugLogging: options.debugLogging,
         })),
     plugins.afterDeobfuscate &&
       (() => runPlugins(ast, plugins.afterDeobfuscate!, state)),
