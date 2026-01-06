@@ -25,7 +25,7 @@
     "typescript": "^5.8.2",
     "vite": "^6.2.4",
     "vite-plugin-monaco-editor": "^1.1.0",
-    "vite-plugin-node-polyfills": "^0.23.0",
+    "vite-plugin-node-polyfills": "^0.22.0",
     "vite-plugin-solid": "^2.11.6"
   },
   "dependencies": {
