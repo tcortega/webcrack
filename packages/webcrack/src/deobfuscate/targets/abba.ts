@@ -1,5 +1,5 @@
 import { applyTransform } from '../../ast-utils';
-import { stringArrayExtractor } from '../abba';
+import { stringArrayExtractor, stringArrayRotator } from '../abba';
 import type { DeobfuscatorTarget } from '../target';
 
 const abbaTarget: DeobfuscatorTarget = {
@@ -26,8 +26,14 @@ const abbaTarget: DeobfuscatorTarget = {
       state.changes += extractorResult.changes;
       log(`String Array Extractor: ${extractorResult.changes} arrays extracted`);
 
-      // Future steps will be added here:
       // Step 2: String Array Rotator
+      const rotatorResult = applyTransform(ast, stringArrayRotator, {
+        debug,
+      });
+      state.changes += rotatorResult.changes;
+      log(`String Array Rotator: ${rotatorResult.changes} arrays rotated`);
+
+      // Future steps will be added here:
       // Step 3: Proxy Inliner
       // Step 4: Member Expression Simplifier
       // Step 5: Module Loader Resolver
