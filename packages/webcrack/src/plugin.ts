@@ -3,8 +3,6 @@ import template from '@babel/template';
 import traverse, { visitors, type Visitor } from '@babel/traverse';
 import * as t from '@babel/types';
 import * as m from '@codemod/matchers';
-import { deobfuscatorRegistry } from './deobfuscate/registry';
-import type { DeobfuscatorTarget } from './deobfuscate/target';
 
 export type Stage =
   | 'afterParse'
@@ -28,10 +26,6 @@ export interface PluginAPI {
   traverse: typeof traverse;
   template: typeof template;
   matchers: typeof m;
-  /**
-   * Register a custom deobfuscator target
-   */
-  registerDeobfuscator: (target: DeobfuscatorTarget) => void;
 }
 
 export type Plugin = (api: PluginAPI) => PluginObject;
@@ -48,7 +42,6 @@ export async function runPlugins(
       traverse,
       template,
       matchers: m,
-      registerDeobfuscator: (target) => deobfuscatorRegistry.register(target),
     }),
   );
 

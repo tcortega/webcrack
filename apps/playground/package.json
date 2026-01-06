@@ -31,6 +31,7 @@
   "dependencies": {
     "@babel/generator": "^7.27.1",
     "@babel/types": "^7.27.1",
+    "@tanstack/solid-virtual": "^3.13.17",
     "@zip.js/zip.js": "^2.7.60",
     "idb": "^8.0.2",
     "monaco-editor": "^0.52.2",

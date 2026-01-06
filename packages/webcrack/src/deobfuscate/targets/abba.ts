@@ -1,3 +1,5 @@
+import generate from '@babel/generator';
+import { parse } from '@babel/parser';
 import { applyTransform } from '../../ast-utils';
 import {
   deadCodeRemoval,
@@ -70,6 +72,18 @@ const abbaTarget: DeobfuscatorTarget = {
       log(`Module Resolver: ${resolverResult.changes} modules resolved`);
 
       // Step 6: Dead Code Removal
+      // Re-parse to get fresh AST with clean scope (Babel holds stale references after heavy mutations)
+      const code = generate(ast).code;
+      const freshAst = parse(code, {
+        sourceType: 'unambiguous',
+        allowReturnOutsideFunction: true,
+        plugins: ['jsx'],
+      });
+
+      // Copy fresh AST content back to original ast object
+      ast.program = freshAst.program;
+      ast.comments = freshAst.comments;
+
       const deadCodeResult = applyTransform(ast, deadCodeRemoval, {
         debug,
       });
