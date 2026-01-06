@@ -4,6 +4,7 @@ import {
   For,
   Show,
   batch,
+  createEffect,
   createMemo,
   createSignal,
   onCleanup,
@@ -12,25 +13,76 @@ import { createStore } from 'solid-js/store';
 import Alert from './components/Alert';
 import Breadcrumbs from './components/Breadcrumbs';
 import FileDropZone from './components/FileDropZone';
+import LogsPanel from './components/LogsPanel';
 import MonacoEditor from './components/MonacoEditor';
 import ProgressBar from './components/ProgressBar';
 import Sidebar from './components/Sidebar';
 import Tab from './components/Tab.jsx';
 import Menu from './components/menu/Menu';
-import { DeobfuscateContextProvider } from './context/DeobfuscateContext';
+import {
+  DeobfuscateContextProvider,
+  useDeobfuscateContext,
+} from './context/DeobfuscateContext';
 import { settings } from './hooks/useSettings';
 import { useWorkspaces, type Workspace } from './indexeddb';
 import { debounce } from './utils/debounce';
 import { downloadFile } from './utils/files';
 import type { DeobfuscateResult } from './webcrack.worker';
 
-export const [config, setConfig] = createStore({
+function LogsPanelWithContext() {
+  const { logs, clearLogs } = useDeobfuscateContext();
+  return <LogsPanel logs={logs} onClear={clearLogs} />;
+}
+
+type SerializedConfig = {
+  deobfuscate: boolean;
+  deobfuscator: string;
+  unminify: boolean;
+  unpack: boolean;
+  jsx: boolean;
+  mangleRegex: { pattern: string; flags: string } | null;
+};
+
+const defaultConfig = {
   deobfuscate: true,
   deobfuscator: 'auto' as string,
   unminify: true,
   unpack: true,
   jsx: true,
   mangleRegex: null as RegExp | null,
+};
+
+function loadConfig(): typeof defaultConfig {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem('config') ?? '{}',
+    ) as Partial<SerializedConfig>;
+    return {
+      ...defaultConfig,
+      ...saved,
+      mangleRegex: saved.mangleRegex
+        ? new RegExp(saved.mangleRegex.pattern, saved.mangleRegex.flags)
+        : null,
+    };
+  } catch {
+    return defaultConfig;
+  }
+}
+
+function saveConfig(config: typeof defaultConfig) {
+  const serialized: SerializedConfig = {
+    ...config,
+    mangleRegex: config.mangleRegex
+      ? { pattern: config.mangleRegex.source, flags: config.mangleRegex.flags }
+      : null,
+  };
+  localStorage.setItem('config', JSON.stringify(serialized));
+}
+
+export const [config, setConfig] = createStore(loadConfig());
+
+createEffect(() => {
+  saveConfig({ ...config });
 });
 
 function App() {
@@ -283,6 +335,7 @@ function App() {
               openUntitledTab().setValue(content);
             }}
           />
+          <LogsPanelWithContext />
         </main>
       </div>
       <Alert />

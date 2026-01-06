@@ -110,6 +110,12 @@ export interface Options {
    * @param progress Progress in percent (0-100)
    */
   onProgress?: (progress: number) => void;
+  /**
+   * Callback for log messages during deobfuscation.
+   * @param level Log level (info, debug, warn, error)
+   * @param message Log message
+   */
+  onLog?: (level: 'info' | 'debug' | 'warn' | 'error', message: string) => void;
 }
 
 function mergeOptions(options: Options): asserts options is Required<Options> {
@@ -122,6 +128,7 @@ function mergeOptions(options: Options): asserts options is Required<Options> {
     plugins: options.plugins ?? {},
     mappings: () => ({}),
     onProgress: () => {},
+    onLog: () => {},
     sandbox: isBrowser() ? createBrowserSandbox() : createNodeSandbox(),
     ...options,
   };
@@ -192,6 +199,7 @@ export async function webcrack(
         runDeobfuscation(ast, {
           target: options.deobfuscate,
           sandbox: options.sandbox,
+          onLog: options.onLog,
         })),
     plugins.afterDeobfuscate &&
       (() => runPlugins(ast, plugins.afterDeobfuscate!, state)),

@@ -14,6 +14,8 @@ export interface DeobfuscateRunnerOptions {
   threshold?: number;
   /** Sandbox for code execution */
   sandbox?: Sandbox;
+  /** Callback for log messages */
+  onLog?: (level: 'info' | 'debug' | 'warn' | 'error', message: string) => void;
 }
 
 /**
@@ -74,15 +76,25 @@ async function runTarget(
   ast: t.File,
   state: TransformState,
   sandbox?: Sandbox,
+  onLog?: (level: 'info' | 'debug' | 'warn' | 'error', message: string) => void,
 ): Promise<void> {
   const targetLogger = debug(`webcrack:deobfuscate:${target.meta.id}`);
   targetLogger(`Starting deobfuscation`);
+  onLog?.('info', `[${target.meta.id}] Starting deobfuscation`);
 
   const context: DeobfuscatorContext = {
     ast,
     state,
     sandbox,
-    log: (message, ...args) => targetLogger(message, ...args),
+    log: (message, ...args) => {
+      targetLogger(message, ...args);
+      // Format the message with args for onLog callback
+      const formattedMessage =
+        args.length > 0
+          ? message.replace(/%[sdifjoO%]/g, () => String(args.shift()))
+          : message;
+      onLog?.('info', `[${target.meta.id}] ${formattedMessage}`);
+    },
   };
 
   await target.deobfuscate.run(context);
@@ -93,6 +105,7 @@ async function runTarget(
   }
 
   targetLogger(`Completed with ${state.changes} changes`);
+  onLog?.('info', `[${target.meta.id}] Completed with ${state.changes} changes`);
 }
 
 /**
@@ -108,10 +121,11 @@ export async function runDeobfuscation(
 
   if (!target) {
     logger('No deobfuscation target to run');
+    options.onLog?.('info', 'No deobfuscation target to run');
     return state;
   }
 
-  await runTarget(target, ast, state, options.sandbox);
+  await runTarget(target, ast, state, options.sandbox, options.onLog);
 
   return state;
 }

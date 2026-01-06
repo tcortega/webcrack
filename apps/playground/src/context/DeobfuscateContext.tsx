@@ -4,6 +4,7 @@ import type { Options } from 'webcrack';
 import { evalCode } from '../sandbox';
 import type {
   DeobfuscateResult,
+  LogEntry,
   WorkerRequest,
   WorkerResponse,
 } from '../webcrack.worker';
@@ -19,10 +20,21 @@ interface Props {
   onResult: (result: DeobfuscateResult) => void;
 }
 
+export type { LogEntry };
+
 function useProviderValue(props: Props) {
   const [deobfuscating, setDeobfuscating] = createSignal(false);
   const [progress, setProgress] = createSignal(0);
   const [alert, setAlert] = createSignal<string | null>(null);
+  const [logs, setLogs] = createSignal<LogEntry[]>([]);
+
+  function clearLogs() {
+    setLogs([]);
+  }
+
+  function addLog(entry: LogEntry) {
+    setLogs((prev) => [...prev, entry]);
+  }
 
   function cancelDeobfuscate() {
     if (!deobfuscating()) return console.warn('Not deobfuscating...');
@@ -37,6 +49,7 @@ function useProviderValue(props: Props) {
     if (!props.code) return console.warn('No code to deobfuscate...');
 
     setProgress(0);
+    clearLogs();
     setDeobfuscating(true);
     postMessage({
       type: 'deobfuscate',
@@ -55,6 +68,8 @@ function useProviderValue(props: Props) {
           });
       } else if (data.type === 'progress') {
         setProgress(data.value);
+      } else if (data.type === 'log') {
+        addLog(data.entry);
       } else if (data.type === 'result') {
         setAlert(null);
         setDeobfuscating(false);
@@ -73,6 +88,8 @@ function useProviderValue(props: Props) {
     progress,
     alert,
     setAlert,
+    logs,
+    clearLogs,
   };
 }
 

@@ -1,3 +1,5 @@
+import { applyTransform } from '../../ast-utils';
+import { stringArrayExtractor } from '../abba';
 import type { DeobfuscatorTarget } from '../target';
 
 const abbaTarget: DeobfuscatorTarget = {
@@ -8,14 +10,26 @@ const abbaTarget: DeobfuscatorTarget = {
     tags: [],
   },
 
-  detect(ast) {
+  detect() {
     // TODO: Implement detection heuristics
     return { confidence: 0, details: {} };
   },
 
   deobfuscate: {
     async run(context) {
-      // TODO: Implement deobfuscation logic
+      const { ast, state, log } = context;
+
+      // Step 1: String Array Extractor
+      const extractorResult = applyTransform(ast, stringArrayExtractor);
+      state.changes += extractorResult.changes;
+      log(`String Array Extractor: ${extractorResult.changes} arrays extracted`);
+
+      // Future steps will be added here:
+      // Step 2: String Array Rotator
+      // Step 3: Proxy Inliner
+      // Step 4: Member Expression Simplifier
+      // Step 5: Module Loader Resolver
+      // Step 6: Dead Code Removal
     },
   },
 };
