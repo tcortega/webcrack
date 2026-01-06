@@ -1,9 +1,11 @@
 import { applyTransform } from '../../ast-utils';
 import {
   memberExpressionSimplifier,
+  moduleResolver,
   proxyInliner,
   stringArrayExtractor,
   stringArrayRotator,
+  stringNormalizer,
 } from '../abba';
 import type { DeobfuscatorTarget } from '../target';
 
@@ -45,6 +47,13 @@ const abbaTarget: DeobfuscatorTarget = {
       state.changes += inlinerResult.changes;
       log(`Proxy Inliner: ${inlinerResult.changes} calls inlined`);
 
+      // Step 3.5: String & Numeric Normalizer
+      const normalizerResult = applyTransform(ast, stringNormalizer, {
+        debug,
+      });
+      state.changes += normalizerResult.changes;
+      log(`String Normalizer: ${normalizerResult.changes} literals normalized`);
+
       // Step 4: Member Expression Simplifier
       const simplifierResult = applyTransform(ast, memberExpressionSimplifier, {
         debug,
@@ -52,8 +61,14 @@ const abbaTarget: DeobfuscatorTarget = {
       state.changes += simplifierResult.changes;
       log(`Member Expression Simplifier: ${simplifierResult.changes} expressions simplified`);
 
-      // Future steps will be added here:
       // Step 5: Module Loader Resolver
+      const resolverResult = applyTransform(ast, moduleResolver, {
+        debug,
+      });
+      state.changes += resolverResult.changes;
+      log(`Module Resolver: ${resolverResult.changes} modules resolved`);
+
+      // Future steps will be added here:
       // Step 6: Dead Code Removal
     },
   },
