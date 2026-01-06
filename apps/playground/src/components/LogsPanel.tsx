@@ -1,4 +1,5 @@
-import { createEffect, createSignal, For, on, Show } from 'solid-js';
+import { createVirtualizer } from '@tanstack/solid-virtual';
+import { createEffect, createSignal, on, Show } from 'solid-js';
 
 export interface LogEntry {
   level: 'info' | 'debug' | 'warn' | 'error';
@@ -47,18 +48,30 @@ const levelConfig = {
   },
 };
 
+const ROW_HEIGHT = 24; // Fixed row height for virtualization
+
 export default function LogsPanel(props: LogsPanelProps) {
   const [collapsed, setCollapsed] = createSignal(false);
   let logsContainerRef: HTMLDivElement | undefined;
+
+  // Virtual list configuration
+  const virtualizer = createVirtualizer({
+    get count() {
+      return props.logs().length;
+    },
+    getScrollElement: () => logsContainerRef ?? null,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 10, // Render 10 extra items above/below viewport
+  });
 
   // Auto-scroll to bottom when new logs arrive
   createEffect(
     on(
       () => props.logs().length,
-      () => {
-        if (logsContainerRef && !collapsed()) {
+      (length) => {
+        if (logsContainerRef && !collapsed() && length > 0) {
           requestAnimationFrame(() => {
-            logsContainerRef!.scrollTop = logsContainerRef!.scrollHeight;
+            virtualizer.scrollToIndex(length - 1, { align: 'end' });
           });
         }
       },
@@ -200,7 +213,7 @@ export default function LogsPanel(props: LogsPanelProps) {
         </div>
       </div>
 
-      {/* Logs Container */}
+      {/* Logs Container - Virtualized */}
       <div
         ref={logsContainerRef}
         class="flex-1 overflow-y-auto overflow-x-hidden min-h-0 font-mono text-xs"
@@ -213,31 +226,39 @@ export default function LogsPanel(props: LogsPanelProps) {
             </div>
           }
         >
-          <div class="p-1">
-            <For each={props.logs()}>
-              {(entry, index) => {
-                const config = levelConfig[entry.level];
-                return (
-                  <div
-                    class={`flex gap-2 px-2 py-0.5 rounded ${
-                      index() % 2 === 0 ? 'bg-base-content/[0.02]' : ''
-                    } hover:bg-base-content/5 transition-colors`}
+          <div
+            class="relative w-full"
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const entry = props.logs()[virtualRow.index];
+              const config = levelConfig[entry.level];
+              return (
+                <div
+                  class={`absolute top-0 left-0 w-full flex gap-2 px-2 ${
+                    virtualRow.index % 2 === 0 ? 'bg-base-content/[0.02]' : ''
+                  } hover:bg-base-content/5 transition-colors`}
+                  style={{
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <span class="text-base-content/40 shrink-0 tabular-nums leading-6">
+                    {formatTimestamp(entry.timestamp)}
+                  </span>
+                  <span
+                    class={`shrink-0 w-12 ${config.color} font-semibold leading-6`}
                   >
-                    <span class="text-base-content/40 shrink-0 tabular-nums">
-                      {formatTimestamp(entry.timestamp)}
-                    </span>
-                    <span
-                      class={`shrink-0 w-12 ${config.color} font-semibold`}
-                    >
-                      {config.label}
-                    </span>
-                    <span class="text-base-content/80 break-all">
-                      {entry.message}
-                    </span>
-                  </div>
-                );
-              }}
-            </For>
+                    {config.label}
+                  </span>
+                  <span class="text-base-content/80 truncate leading-6">
+                    {entry.message}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </Show>
       </div>
