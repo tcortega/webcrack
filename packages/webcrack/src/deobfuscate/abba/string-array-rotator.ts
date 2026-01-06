@@ -80,9 +80,11 @@ export default {
           return;
         }
 
-        // 4. Detect the '++f' increment nuance
-        // Look for the inner function call: g(++f) or similar
+        // 4. Analyze the inner function call pattern to determine actual rotation count
+        // Pattern: g(++f) with while(--h) means rotation = base value
+        // Pattern: g(f) with while(--h) means rotation = base value - 1
         const bodyStatements = callee.body.body;
+        let hasPreIncrement = false;
 
         for (const stmt of bodyStatements) {
           if (!t.isExpressionStatement(stmt)) continue;
@@ -94,10 +96,16 @@ export default {
           const firstArg = innerArgs[0];
           // Check if argument is UpdateExpression with prefix ++
           if (t.isUpdateExpression(firstArg) && firstArg.operator === '++' && firstArg.prefix) {
-            debugLog('rotator: %s - detected prefix ++, adding 1 to rotation', arrayName);
-            rotationAmount += 1;
+            hasPreIncrement = true;
+            debugLog('rotator: %s - detected prefix ++ (rotation = base value)', arrayName);
             break;
           }
+        }
+
+        // If no prefix ++, the while(--h) loop runs one less time
+        if (!hasPreIncrement) {
+          rotationAmount -= 1;
+          debugLog('rotator: %s - no prefix ++, subtracting 1 from rotation', arrayName);
         }
 
         logger('%s: rotating array by %d positions', arrayName, rotationAmount);
