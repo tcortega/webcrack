@@ -1,4 +1,8 @@
 import esbuild from 'esbuild';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+
+const require = createRequire(import.meta.url);
 
 const args = process.argv.slice(2);
 const watch = args.length > 0 && /^(?:--watch|-w)$/i.test(args[0]);
@@ -18,11 +22,13 @@ const babelImportPlugin = {
     });
 
     build.onLoad({ filter: /.*/, namespace: 'babel-import' }, (args) => {
+      const pkgPath = require.resolve(`${args.path}/package.json`);
+      const pkgDir = dirname(pkgPath);
       return {
-        resolveDir: 'node_modules',
-        contents: `import module from '${args.path}/lib/index.js';
+        resolveDir: pkgDir,
+        contents: `import module from './lib/index.js';
           export default module.default ?? module;
-          export * from '${args.path}/lib/index.js';`,
+          export * from './lib/index.js';`,
       };
     });
   },

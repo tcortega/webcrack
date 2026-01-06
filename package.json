@@ -2,6 +2,8 @@
   "name": "webcrack",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.2.22",
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
@@ -22,18 +24,12 @@
     "turbo": "^2.4.4",
     "vitest": "^3.1.1"
   },
-  "packageManager": "pnpm@10.12.4",
-  "pnpm": {
-    "patchedDependencies": {
-      "vite-plugin-monaco-editor@1.1.0": "patches/vite-plugin-monaco-editor@1.1.0.patch"
-    },
-    "overrides": {
-      "esbuild@<=0.24.2": ">=0.25.0",
-      "tar-fs@>=2.0.0 <2.1.2": ">=2.1.2"
-    },
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "isolated-vm"
-    ]
+  "overrides": {
+    "esbuild": ">=0.25.0",
+    "tar-fs": ">=2.1.2"
+  },
+  "trustedDependencies": ["esbuild", "isolated-vm"],
+  "patchedDependencies": {
+    "vite-plugin-monaco-editor@1.1.0": "patches/vite-plugin-monaco-editor@1.1.0.patch"
   }
 }

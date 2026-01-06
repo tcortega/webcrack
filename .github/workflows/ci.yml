@@ -14,25 +14,24 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: bun run typecheck
         continue-on-error: true
 
       - name: Lint
-        run: pnpm lint
+        run: bun run lint
         continue-on-error: true
 
       - name: Check formatting
-        run: pnpm format:check
+        run: bun run format:check
         continue-on-error: true
 
   test:
@@ -46,14 +45,13 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install
 
       - name: Run tests
-        run: pnpm test
+        run: bun run test

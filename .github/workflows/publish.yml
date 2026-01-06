@@ -3,7 +3,7 @@ name: Publish Package to npmjs
 on:
   release:
     types: [published]
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,25 +13,23 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install
 
       - name: Build
         run: |
-          pnpm build --filter webcrack
+          bun run build --filter webcrack
           cp README.md packages/webcrack
 
-      # https://github.com/pnpm/pnpm/issues/3141#issuecomment-1305563972
       - name: Set publishing config
-        run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
+        run: npm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
       - name: Publish
-        run: pnpm publish --filter webcrack --no-git-checks
+        run: npm publish --workspace packages/webcrack --no-git-checks
