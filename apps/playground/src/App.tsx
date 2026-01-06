@@ -29,6 +29,14 @@ import { debounce } from './utils/debounce';
 import { downloadFile } from './utils/files';
 import type { DeobfuscateResult } from './webcrack.worker';
 
+const [logsHeight, setLogsHeight] = createSignal(
+  parseInt(localStorage.getItem('logsHeight') ?? '200', 10),
+);
+
+createEffect(() => {
+  localStorage.setItem('logsHeight', logsHeight().toString());
+});
+
 function LogsPanelWithContext() {
   const { logs, clearLogs } = useDeobfuscateContext();
   return (
@@ -37,6 +45,8 @@ function LogsPanelWithContext() {
       onClear={clearLogs}
       debugEnabled={() => config.debugLogging}
       onDebugToggle={(enabled) => setConfig('debugLogging', enabled)}
+      height={logsHeight}
+      onHeightChange={setLogsHeight}
     />
   );
 }

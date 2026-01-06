@@ -11,6 +11,8 @@ interface LogsPanelProps {
   onClear: () => void;
   debugEnabled: () => boolean;
   onDebugToggle: (enabled: boolean) => void;
+  height: () => number;
+  onHeightChange: (height: number) => void;
 }
 
 function formatTimestamp(ts: number): string {
@@ -63,13 +65,46 @@ export default function LogsPanel(props: LogsPanelProps) {
     ),
   );
 
+  const startResize = (e: MouseEvent | TouchEvent) => {
+    e.preventDefault();
+    const startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const startHeight = props.height();
+
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      const currentY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const delta = startY - currentY;
+      const newHeight = Math.min(600, Math.max(100, startHeight + delta));
+      props.onHeightChange(newHeight);
+    };
+
+    const onEnd = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchmove', onMove);
+    document.addEventListener('touchend', onEnd);
+  };
+
   return (
     <div
-      class="border-t border-base-content/10 bg-base-300 flex flex-col transition-all duration-200 ease-out"
+      class="border-t border-base-content/10 bg-base-300 flex flex-col"
       style={{
-        height: collapsed() ? '40px' : '200px',
+        height: collapsed() ? '40px' : `${props.height()}px`,
       }}
     >
+      {/* Resize handle */}
+      <div
+        class="h-1.5 cursor-ns-resize hover:bg-primary/30 active:bg-primary/50 transition-colors flex items-center justify-center group shrink-0"
+        onMouseDown={startResize}
+        onTouchStart={startResize}
+      >
+        <div class="w-8 h-0.5 bg-base-content/20 rounded group-hover:bg-primary/50" />
+      </div>
       {/* Header */}
       <div class="flex items-center justify-between px-3 h-10 shrink-0 border-b border-base-content/5">
         <button
