@@ -1,5 +1,5 @@
 import { applyTransform } from '../../ast-utils';
-import { stringArrayExtractor, stringArrayRotator } from '../abba';
+import { proxyInliner, stringArrayExtractor, stringArrayRotator } from '../abba';
 import type { DeobfuscatorTarget } from '../target';
 
 const abbaTarget: DeobfuscatorTarget = {
@@ -33,8 +33,14 @@ const abbaTarget: DeobfuscatorTarget = {
       state.changes += rotatorResult.changes;
       log(`String Array Rotator: ${rotatorResult.changes} arrays rotated`);
 
-      // Future steps will be added here:
       // Step 3: Proxy Inliner
+      const inlinerResult = applyTransform(ast, proxyInliner, {
+        debug,
+      });
+      state.changes += inlinerResult.changes;
+      log(`Proxy Inliner: ${inlinerResult.changes} calls inlined`);
+
+      // Future steps will be added here:
       // Step 4: Member Expression Simplifier
       // Step 5: Module Loader Resolver
       // Step 6: Dead Code Removal
